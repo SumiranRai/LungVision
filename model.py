@@ -19,7 +19,7 @@ def load_model(model_path, device):
     # If saved as state_dict
     if isinstance(checkpoint, dict):
         model = models.efficientnet_b3(pretrained=False)
-        model.classifier[1] = torch.nn.Linear(model.classifier[1].in_features, 5)  # Change to 5 classes
+        model.classifier[1] = torch.nn.Linear(model.classifier[1].in_features, 4)  # Keep 4 output classes
         model.load_state_dict(checkpoint)
     else:
         model = checkpoint  # Full model saved
@@ -27,7 +27,7 @@ def load_model(model_path, device):
     model.to(device)
     model.eval()
     
-    class_names = ["NORMAL", "PNEUMONIA", "TUBERCULOSIS", "UNKNOWN", "OTHER FINDINGS"]  # Updated class list
+    class_names = ["NORMAL", "PNEUMONIA", "TUBERCULOSIS", "UNKNOWN"]
     return model, class_names
 
 def predict(model, image, class_names, device, threshold=0.6):
@@ -41,10 +41,10 @@ def predict(model, image, class_names, device, threshold=0.6):
     predicted_label = class_names[predicted_class.item()]
     confidence_score = confidence.item() * 100
 
-    # If confidence is below threshold, label as "Other Findings"
-    if confidence_score < threshold * 100 and predicted_label != "UNKNOWN":
+    # If confidence is below threshold, label as "OTHER FINDINGS"
+    if confidence_score < threshold * 100:
         predicted_label = "OTHER FINDINGS"
-        confidence_score = 0  # Reset confidence to 0 for "Other Findings"
+        confidence_score = 0  # Reset confidence for "Other Findings"
 
     # Generate Grad-CAM
     grad_cam_map = generate_grad_cam(model, input_tensor, predicted_class.item(), device)
