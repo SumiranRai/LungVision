@@ -34,54 +34,63 @@ uploaded_file = st.file_uploader("📂 Upload a chest X-ray Image for AI-based d
 @st.cache_data
 def process_image(image):
     """Process the image and return predictions."""
-    predicted_label, confidence_score, grad_cam_overlay = predict(model, image, class_names, device)
-    
-    # Convert Grad-CAM to RGB format for Streamlit display
-    grad_cam_overlay = cv2.cvtColor((grad_cam_overlay * 255).astype(np.uint8), cv2.COLOR_BGR2RGB)
-    return predicted_label, confidence_score, grad_cam_overlay
+    try:
+        predicted_label, confidence_score, grad_cam_overlay = predict(model, image, class_names, device)
+        
+        # Convert Grad-CAM to RGB format for Streamlit display
+        grad_cam_overlay = cv2.cvtColor((grad_cam_overlay * 255).astype(np.uint8), cv2.COLOR_BGR2RGB)
+        return predicted_label, confidence_score, grad_cam_overlay
+    except Exception as e:
+        return None, None, None
 
 if uploaded_file is not None:
     file_size_mb = uploaded_file.size / (1024 * 1024)
     if file_size_mb > 25:
         st.error(f"❌ File too large! (Your file: {file_size_mb:.2f} MB)")
     else:
-        # Load Image
-        image = Image.open(uploaded_file).convert("RGB")
+        try:
+            # Load and preprocess Image
+            image = Image.open(uploaded_file).convert("RGB")
+            
+            # Run prediction (cached)
+            with st.spinner("🔍 Analyzing..."):
+                predicted_label, confidence_score, grad_cam_overlay = process_image(image)
 
-        # Run prediction (cached)
-        with st.spinner("🔍 Analyzing..."):
-            predicted_label, confidence_score, grad_cam_overlay = process_image(image)
+            if predicted_label is None:
+                st.error("⚠️ Error processing image. Please try another file.")
+            else:
+                # Display results in columns for better alignment
+                col1, col2 = st.columns(2)
 
-        # Display results in columns for better alignment
-        col1, col2 = st.columns(2)
+                with col1:
+                    st.image(image, caption="📷 Uploaded Image", width=300)
 
-        with col1:
-            st.image(image, caption="📷 Uploaded Image", width=300)
+                with col2:
+                    st.image(grad_cam_overlay, caption="🔥 Grad-CAM Heatmap", width=300)
 
-        with col2:
-            st.image(grad_cam_overlay, caption="🔥 Grad-CAM Heatmap", width=300)
+                # Display diagnosis results
+                st.subheader("🔬 Prediction Results")
+                st.write(f"**Prediction:** `{predicted_label}`")
+                st.write(f"**Confidence:** `{confidence_score:.2f}%`")
 
-        # Display diagnosis results
-        st.subheader("🔬 Prediction Results")
-        st.write(f"**Prediction:** `{predicted_label}`")
-        st.write(f"**Confidence:** `{confidence_score:.2f}%`")
+                # Convert Grad-CAM image for downloading
+                grad_cam_pil = Image.fromarray(grad_cam_overlay)
+                img_byte_arr = io.BytesIO()
+                grad_cam_pil.save(img_byte_arr, format='PNG')
+                img_byte_arr = img_byte_arr.getvalue()
 
-        # Convert Grad-CAM image for downloading
-        grad_cam_pil = Image.fromarray(grad_cam_overlay)
-        img_byte_arr = io.BytesIO()
-        grad_cam_pil.save(img_byte_arr, format='PNG')
-        img_byte_arr = img_byte_arr.getvalue()
+                # Download buttons
+                st.download_button(
+                    "📥 Download Diagnosis", 
+                    data=f"Prediction: {predicted_label}\nConfidence: {confidence_score:.2f}%", 
+                    file_name="diagnosis.txt"
+                )
 
-        # Download buttons
-        st.download_button(
-            "📥 Download Diagnosis", 
-            data=f"Prediction: {predicted_label}\nConfidence: {confidence_score:.2f}%", 
-            file_name="diagnosis.txt"
-        )
-
-        st.download_button(
-            "📥 Download Grad-CAM", 
-            data=img_byte_arr, 
-            file_name="grad_cam.png", 
-            mime="image/png"
-        )
+                st.download_button(
+                    "📥 Download Grad-CAM", 
+                    data=img_byte_arr, 
+                    file_name="grad_cam.png", 
+                    mime="image/png"
+                )
+        except Exception as e:
+            st.error(f"⚠️ Unexpected error: {str(e)}")
