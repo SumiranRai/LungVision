@@ -20,7 +20,7 @@ def generate_grad_cam(model, input_image, target_class, device):
         output = model(input_image)
 
         # Compute gradients
-        class_score = output[0, target_class]
+        class_score = output[0, target_class]  # This line remains the same for the 5-class setup
         model.zero_grad()
         class_score.backward(retain_graph=True)
 
