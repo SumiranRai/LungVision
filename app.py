@@ -5,6 +5,11 @@ from PIL import Image
 import cv2
 from model import load_model, predict
 
+import os
+os.makedirs(".devcontainer", exist_ok=True)
+with open(".devcontainer/config.toml", "w") as f:
+    f.write("[server]\nmaxUploadSize = 50\n")
+    
 # Set device (CPU or CUDA if available)
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
