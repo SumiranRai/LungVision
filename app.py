@@ -1,9 +1,10 @@
 import os
+import io
 import streamlit as st
 import torch
 import numpy as np
-from PIL import Image
 import cv2
+from PIL import Image
 from model import load_model, predict
 
 # Ensure Streamlit config directory exists
@@ -23,18 +24,6 @@ def load_cached_model():
 
 model, class_names = load_cached_model()
 
-# Get absolute path for sidebar image
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-sidebar_logo_path = os.path.join(BASE_DIR, "sidebar_logo.png")
-
-# Sidebar with settings (if image exists)
-with st.sidebar:
-    if os.path.exists(sidebar_logo_path):
-        st.image(sidebar_logo_path, width=120)
-
-    st.subheader("⚙️ Settings")
-    confidence_threshold = st.slider("📊 Confidence Threshold", 50, 100, 80)
-
 # Title
 st.title("Tuberculosis & Pneumonia Detection 🫁")
 st.write("📂 Upload a **chest X-ray** for **AI-based diagnosis**.")
@@ -47,6 +36,8 @@ uploaded_file = st.file_uploader("📂 Upload X-ray Image", type=["jpg", "png", 
 def process_image(image):
     """Process the image and return predictions."""
     predicted_label, confidence_score, grad_cam_overlay = predict(model, image, class_names, device)
+    
+    # Convert Grad-CAM to RGB format for Streamlit display
     grad_cam_overlay = cv2.cvtColor((grad_cam_overlay * 255).astype(np.uint8), cv2.COLOR_BGR2RGB)
     return predicted_label, confidence_score, grad_cam_overlay
 
@@ -58,22 +49,40 @@ if uploaded_file is not None:
         # Load Image
         image = Image.open(uploaded_file).convert("RGB")
 
-        # Display uploaded image
-        st.image(image, caption="📷 Uploaded Image", width=300)
-
         # Run prediction (cached)
         with st.spinner("🔍 Analyzing..."):
             predicted_label, confidence_score, grad_cam_overlay = process_image(image)
 
-        # Display results
+        # Display results in columns for better alignment
+        col1, col2 = st.columns(2)
+
+        with col1:
+            st.image(image, caption="📷 Uploaded Image", width=300)
+
+        with col2:
+            st.image(grad_cam_overlay, caption="🔥 Grad-CAM Heatmap", width=300)
+
+        # Display diagnosis results
         st.subheader("🔬 Prediction Results")
         st.write(f"**Prediction:** `{predicted_label}`")
         st.write(f"**Confidence:** `{confidence_score:.2f}%`")
 
-        # Display Grad-CAM heatmap
-        st.image(grad_cam_overlay, caption="🔥 Grad-CAM Heatmap", width=300)
+        # Convert Grad-CAM image for downloading
+        grad_cam_pil = Image.fromarray(grad_cam_overlay)
+        img_byte_arr = io.BytesIO()
+        grad_cam_pil.save(img_byte_arr, format='PNG')
+        img_byte_arr = img_byte_arr.getvalue()
 
-        # Download Button for Diagnosis
-        st.download_button("📥 Download Diagnosis", 
-                           data=f"Prediction: {predicted_label}\nConfidence: {confidence_score:.2f}%", 
-                           file_name="diagnosis.txt")
+        # Download buttons
+        st.download_button(
+            "📥 Download Diagnosis", 
+            data=f"Prediction: {predicted_label}\nConfidence: {confidence_score:.2f}%", 
+            file_name="diagnosis.txt"
+        )
+
+        st.download_button(
+            "📥 Download Grad-CAM", 
+            data=img_byte_arr, 
+            file_name="grad_cam.png", 
+            mime="image/png"
+        )
