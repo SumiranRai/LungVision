@@ -21,15 +21,20 @@ uploaded_file = st.file_uploader("Choose an image...", type=["jpg", "png", "jpeg
 if uploaded_file is not None:
     # Load image
     image = Image.open(uploaded_file).convert("RGB")
-    st.image(image, caption="Uploaded Image", use_container_width=True)  # Fixed warning
 
     # Prediction
     predicted_label, confidence_score, grad_cam_overlay = predict(model, image, class_names, device)
 
-    # Display Results
-    st.write(f"**Prediction:** {predicted_label}")
-    st.write(f"**Confidence:** {confidence_score:.2f}%")
-
-    # Show Grad-CAM heatmap
+    # Convert Grad-CAM overlay for Streamlit display
     grad_cam_overlay = cv2.cvtColor((grad_cam_overlay * 255).astype(np.uint8), cv2.COLOR_BGR2RGB)
-    st.image(grad_cam_overlay, caption="Grad-CAM Heatmap", use_container_width=True)  # Fixed warning
+
+    # Create side-by-side columns
+    col1, col2 = st.columns(2)
+
+    with col1:
+        st.image(image, caption="Uploaded Image", width=300)  # Decreased size
+        st.write(f"**Prediction:** {predicted_label}")
+        st.write(f"**Confidence:** {confidence_score:.2f}%")
+
+    with col2:
+        st.image(grad_cam_overlay, caption="Grad-CAM Heatmap", width=300)  # Decreased size
