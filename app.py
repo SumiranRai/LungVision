@@ -1,37 +1,35 @@
 import streamlit as st
 import torch
-from PIL import Image
 import numpy as np
+from PIL import Image
 import cv2
 from model import load_model, predict
-from gradcam import generate_grad_cam, overlay_grad_cam
 
-# Set device (Streamlit does not provide CUDA, so force CPU)
+# Set device (CPU or CUDA if available)
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 # Load model
-model, class_names = load_model("best-model.pt", device)
+MODEL_PATH = "best-model.pt"
+model, class_names = load_model(MODEL_PATH, device)
 
 # Streamlit UI
-st.title("Tuberculosis Detection from X-ray Images 🫁")
-st.write("Upload a chest X-ray to classify it as **Normal, Pneumonia, Tuberculosis, or Unknown.**")
+st.title("Lungetivity: Tuberculosis & Pneumonia Detection")
+st.write("Upload a chest X-ray image for classification and Grad-CAM visualization.")
 
-# File uploader
-uploaded_file = st.file_uploader("Upload an X-ray Image", type=["jpg", "png", "jpeg"])
+uploaded_file = st.file_uploader("Choose an image...", type=["jpg", "png", "jpeg"])
 
 if uploaded_file is not None:
-    # Read image
+    # Load image
     image = Image.open(uploaded_file).convert("RGB")
-    st.image(image, caption="Uploaded Image", use_column_width=True)
+    st.image(image, caption="Uploaded Image", use_container_width=True)  # Fixed warning
 
-    # Predict
-    with st.spinner("Analyzing..."):
-        predicted_label, confidence, grad_cam_overlay = predict(model, image, class_names, device)
+    # Prediction
+    predicted_label, confidence_score, grad_cam_overlay = predict(model, image, class_names, device)
 
-    # Display results
-    st.subheader("Prediction Results")
-    st.write(f"**Predicted Class:** {predicted_label}")
-    st.write(f"**Confidence:** {confidence:.2f}%")
+    # Display Results
+    st.write(f"**Prediction:** {predicted_label}")
+    st.write(f"**Confidence:** {confidence_score:.2f}%")
 
-    # Display Grad-CAM
-    st.image(grad_cam_overlay, caption="Grad-CAM Activation Map", use_column_width=True)
+    # Show Grad-CAM heatmap
+    grad_cam_overlay = cv2.cvtColor((grad_cam_overlay * 255).astype(np.uint8), cv2.COLOR_BGR2RGB)
+    st.image(grad_cam_overlay, caption="Grad-CAM Heatmap", use_container_width=True)  # Fixed warning
