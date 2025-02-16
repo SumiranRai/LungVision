@@ -34,11 +34,11 @@ uploaded_file = st.file_uploader("📂 Upload a **chest X-ray** for **AI-based**
 @st.cache_data
 def process_image(image):
     """Process the image and return predictions."""
-    predicted_label, confidence_score, grad_cam_overlay = predict(model, image, class_names, device)
+    predicted_label, confidence_score, grad_cam_overlay, other_findings_label = predict(model, image, class_names, device)
 
     # Ensure Grad-CAM is in RGB format for Streamlit
     grad_cam_overlay = cv2.cvtColor((grad_cam_overlay * 255).astype(np.uint8), cv2.COLOR_BGR2RGB)
-    return predicted_label, confidence_score, grad_cam_overlay
+    return predicted_label, confidence_score, grad_cam_overlay, other_findings_label
 
 if uploaded_file is not None:
     file_size_mb = uploaded_file.size / (1024 * 1024)
@@ -50,7 +50,7 @@ if uploaded_file is not None:
 
         # Run prediction
         with st.spinner("🔍 Analyzing..."):
-            predicted_label, confidence_score, grad_cam_overlay = process_image(image)
+            predicted_label, confidence_score, grad_cam_overlay, other_findings_label = process_image(image)
 
         # Display uploaded image and Grad-CAM side by side
         # Display results in columns for better alignment
@@ -68,7 +68,7 @@ if uploaded_file is not None:
         st.write(f"**Confidence:** `{confidence_score:.2f}%`")
 
         # Provide a brief explanation when "Other Findings" is detected
-        if predicted_label == "OTHER FINDINGS":
+        if other_findings_label:
             st.write("⚠️ **Diagnosis:** The model is not confident in this classification. The image has been labeled as 'Other Findings'.")
 
         # Convert Grad-CAM for downloading (optimized PNG compression)
