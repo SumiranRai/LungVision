@@ -41,10 +41,9 @@ def predict(model, image, class_names, device, threshold=0.6):
     predicted_label = class_names[predicted_class.item()]
     confidence_score = confidence.item() * 100
 
-    # If confidence is below threshold, label as "OTHER FINDINGS"
-    if confidence_score < threshold * 100:
+    # If confidence is below threshold for NORMAL, PNEUMONIA, TUBERCULOSIS, classify as OTHER FINDINGS
+    if confidence_score < threshold * 100 and predicted_label != "UNKNOWN":
         predicted_label = "OTHER FINDINGS"
-        confidence_score = 0  # Reset confidence for "Other Findings"
 
     # Generate Grad-CAM
     grad_cam_map = generate_grad_cam(model, input_tensor, predicted_class.item(), device)
