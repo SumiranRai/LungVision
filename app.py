@@ -28,7 +28,7 @@ model, class_names = load_cached_model()
 st.title("Tuberculosis & Pneumonia Detection 🫁")
 
 # File uploader
-uploaded_file = st.file_uploader("📂 Upload a **chest X-ray** for **AI-based diagnosis.", type=["jpg", "png", "jpeg"])
+uploaded_file = st.file_uploader("📂 Upload a **chest X-ray** for **AI-based** diagnosis.", type=["jpg", "png", "jpeg"])
 
 # Cache the prediction function
 @st.cache_data
