@@ -25,7 +25,7 @@ def load_cached_model():
 model, class_names = load_cached_model()
 
 # Title
-st.title("Tuberculosis & Pneumonia Detection 🫁")
+st.title("Lungetivity - Tuberculosis & Pneumonia Detection WebApp 🫁")
 
 # File uploader
 uploaded_file = st.file_uploader("📂 Upload a **chest X-ray** for **AI-based** diagnosis.", type=["jpg", "png", "jpeg"])
