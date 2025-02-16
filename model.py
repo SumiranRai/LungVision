@@ -1,9 +1,11 @@
 import torch
 import torchvision.transforms as transforms
+import torchvision.models as models
 from PIL import Image
 import torch.nn.functional as F
+from gradcam import generate_grad_cam, overlay_grad_cam
 
-# Define image preprocessing
+# Image Preprocessing
 transform = transforms.Compose([
     transforms.Resize((300, 300)),
     transforms.ToTensor(),
@@ -11,20 +13,25 @@ transform = transforms.Compose([
 ])
 
 def load_model(model_path, device):
-    # Load trained EfficientNet model
-    model = torch.load(model_path, map_location=device)
+    checkpoint = torch.load(model_path, map_location=device)
+
+    # If saved as state_dict
+    if isinstance(checkpoint, dict):
+        model = models.efficientnet_b3(pretrained=False)
+        model.classifier[1] = torch.nn.Linear(model.classifier[1].in_features, 4)
+        model.load_state_dict(checkpoint)
+    else:
+        model = checkpoint  # Full model saved
+
+    model.to(device)
     model.eval()
     
-    # Define class names
     class_names = ["NORMAL", "PNEUMONIA", "TUBERCULOSIS", "UNKNOWN"]
-    
     return model, class_names
 
 def predict(model, image, class_names, device):
-    # Preprocess image
     input_tensor = transform(image).unsqueeze(0).to(device)
 
-    # Run inference
     with torch.no_grad():
         output = model(input_tensor)
         probabilities = F.softmax(output, dim=1)
@@ -34,7 +41,6 @@ def predict(model, image, class_names, device):
     confidence_score = confidence.item() * 100
 
     # Generate Grad-CAM
-    from gradcam import generate_grad_cam, overlay_grad_cam
     grad_cam_map = generate_grad_cam(model, input_tensor, predicted_class.item(), device)
     grad_cam_overlay = overlay_grad_cam(grad_cam_map, input_tensor)
 
