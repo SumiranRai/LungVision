@@ -1,8 +1,8 @@
 import torch
 import torchvision.transforms as transforms
 import torchvision.models as models
-from PIL import Image
 import torch.nn.functional as F
+from PIL import Image
 from gradcam import generate_grad_cam, overlay_grad_cam
 
 # Image Preprocessing
@@ -12,13 +12,14 @@ transform = transforms.Compose([
     transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
 ])
 
+# Load the model
 def load_model(model_path, device):
     checkpoint = torch.load(model_path, map_location=device)
 
     # If saved as state_dict
     if isinstance(checkpoint, dict):
         model = models.efficientnet_b3(pretrained=False)
-        model.classifier[1] = torch.nn.Linear(model.classifier[1].in_features, 4)
+        model.classifier[1] = torch.nn.Linear(model.classifier[1].in_features, 5)  # Change to 5 classes
         model.load_state_dict(checkpoint)
     else:
         model = checkpoint  # Full model saved
@@ -26,10 +27,10 @@ def load_model(model_path, device):
     model.to(device)
     model.eval()
     
-    class_names = ["NORMAL", "PNEUMONIA", "TUBERCULOSIS", "UNKNOWN"]
+    class_names = ["NORMAL", "PNEUMONIA", "TUBERCULOSIS", "UNKNOWN", "OTHER FINDINGS"]  # Updated class list
     return model, class_names
 
-def predict(model, image, class_names, device):
+def predict(model, image, class_names, device, threshold=0.6):
     input_tensor = transform(image).unsqueeze(0).to(device)
 
     with torch.no_grad():
@@ -39,6 +40,11 @@ def predict(model, image, class_names, device):
 
     predicted_label = class_names[predicted_class.item()]
     confidence_score = confidence.item() * 100
+
+    # If confidence is below threshold, label as "Other Findings"
+    if confidence_score < threshold * 100 and predicted_label != "UNKNOWN":
+        predicted_label = "OTHER FINDINGS"
+        confidence_score = 0  # Reset confidence to 0 for "Other Findings"
 
     # Generate Grad-CAM
     grad_cam_map = generate_grad_cam(model, input_tensor, predicted_class.item(), device)
