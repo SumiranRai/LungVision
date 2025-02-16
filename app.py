@@ -26,10 +26,9 @@ model, class_names = load_cached_model()
 
 # Title
 st.title("Tuberculosis & Pneumonia Detection 🫁")
-st.write("📂 Upload a **chest X-ray** for **AI-based diagnosis**.")
 
-# File uploader with label restored
-uploaded_file = st.file_uploader("📂 Upload X-ray Image", type=["jpg", "png", "jpeg"])
+# File uploader
+uploaded_file = st.file_uploader("📂 Upload a chest X-ray Image for AI-based diagnosis", type=["jpg", "png", "jpeg"])
 
 # Cache the prediction function
 @st.cache_data
@@ -37,7 +36,7 @@ def process_image(image):
     """Process the image and return predictions."""
     predicted_label, confidence_score, grad_cam_overlay = predict(model, image, class_names, device)
     
-    # Ensure Grad-CAM is in RGB format for Streamlit
+    # Convert Grad-CAM to RGB format for Streamlit display
     grad_cam_overlay = cv2.cvtColor((grad_cam_overlay * 255).astype(np.uint8), cv2.COLOR_BGR2RGB)
     return predicted_label, confidence_score, grad_cam_overlay
 
@@ -46,14 +45,14 @@ if uploaded_file is not None:
     if file_size_mb > 25:
         st.error(f"❌ File too large! (Your file: {file_size_mb:.2f} MB)")
     else:
-        # Load and process image
-        image = Image.open(uploaded_file).convert("RGB")  # Ensure it's RGB
+        # Load Image
+        image = Image.open(uploaded_file).convert("RGB")
 
-        # Run prediction
+        # Run prediction (cached)
         with st.spinner("🔍 Analyzing..."):
             predicted_label, confidence_score, grad_cam_overlay = process_image(image)
 
-        # Display uploaded image and Grad-CAM side by side
+        # Display results in columns for better alignment
         col1, col2 = st.columns(2)
 
         with col1:
@@ -67,10 +66,10 @@ if uploaded_file is not None:
         st.write(f"**Prediction:** `{predicted_label}`")
         st.write(f"**Confidence:** `{confidence_score:.2f}%`")
 
-        # Convert Grad-CAM for downloading (optimized PNG compression)
+        # Convert Grad-CAM image for downloading
         grad_cam_pil = Image.fromarray(grad_cam_overlay)
         img_byte_arr = io.BytesIO()
-        grad_cam_pil.save(img_byte_arr, format='PNG', optimize=True)
+        grad_cam_pil.save(img_byte_arr, format='PNG')
         img_byte_arr = img_byte_arr.getvalue()
 
         # Download buttons
