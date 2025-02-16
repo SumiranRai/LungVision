@@ -50,8 +50,8 @@ def overlay_grad_cam(grad_cam_map, original_image):
     original_image = original_image.squeeze().cpu().detach().numpy().transpose(1, 2, 0)
     original_image = np.clip(original_image, 0, 1)
 
-    # Create heatmap
-    heatmap = cv2.applyColorMap(np.uint8(255 * grad_cam_map), cv2.COLORMAP_JET)
+    # Create heatmap with HOT colormap
+    heatmap = cv2.applyColorMap(np.uint8(255 * grad_cam_map), cv2.COLORMAP_HOT)
     heatmap = np.float32(heatmap) / 255.0
 
     # Overlay heatmap
