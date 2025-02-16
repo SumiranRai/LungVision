@@ -18,7 +18,7 @@ def load_model(model_path, device):
     # If saved as state_dict
     if isinstance(checkpoint, dict):
         model = models.efficientnet_b3(pretrained=False)
-        model.classifier[1] = torch.nn.Linear(model.classifier[1].in_features, 5)  # Update for 5 classes
+        model.classifier[1] = torch.nn.Linear(model.classifier[1].in_features, 4)
         model.load_state_dict(checkpoint)
     else:
         model = checkpoint  # Full model saved
@@ -26,8 +26,7 @@ def load_model(model_path, device):
     model.to(device)
     model.eval()
     
-    # Update the class names for 5 labels
-    class_names = ["NORMAL", "PNEUMONIA", "TUBERCULOSIS", "OTHER_FINDINGS", "UNKNOWN"]
+    class_names = ["NORMAL", "PNEUMONIA", "TUBERCULOSIS", "UNKNOWN"]
     return model, class_names
 
 def predict(model, image, class_names, device):
