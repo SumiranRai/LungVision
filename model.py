@@ -30,7 +30,7 @@ def load_model(model_path, device):
     class_names = ["NORMAL", "PNEUMONIA", "TUBERCULOSIS", "UNKNOWN"]
     return model, class_names
 
-def predict(model, image, class_names, device, threshold=0.6):
+def predict(model, image, class_names, device, threshold=0.8):
     input_tensor = transform(image).unsqueeze(0).to(device)
 
     with torch.no_grad():
