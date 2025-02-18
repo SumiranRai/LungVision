@@ -1,7 +1,7 @@
-# **Lungetivity - Chest X-ray Classification**  
+# **LungVision - Chest X-ray Classification**  
 
 ## **Overview**  
-Lungetivity is an AI-powered web app that classifies chest X-ray images into **Normal, Pneumonia, Tuberculosis, or Unknown** categories. The model is based on **EfficientNet B3**, trained on a dataset of labeled chest X-ray images along with some natural images to simulate real-world scenarios.  
+LungVision is an AI-powered web app that classifies chest X-ray images into **Normal, Pneumonia, Tuberculosis, or Unknown** categories. The model is based on **EfficientNet B3**, trained on a dataset of labeled chest X-ray images along with some natural images to simulate real-world scenarios.  
 
 ## **Features**  
 ✅ Upload chest X-ray images for classification  
@@ -24,4 +24,4 @@ Lungetivity is an AI-powered web app that classifies chest X-ray images into **N
 🚨 This is a **prototype** and **not a medical diagnostic tool**. Consult a professional for medical decisions.  
 
 ## **Try It Out!**  
-🔗 **[Live Demo]https://lungetivity-mcuy7pfbqfrkxojgbtcl5y.streamlit.app/)**  
+🔗 **[Live Demo]https://lungvision.streamlit.app/)**  
